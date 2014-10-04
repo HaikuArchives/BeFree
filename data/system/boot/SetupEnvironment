@@ -1,0 +1,68 @@
+#
+# BeFree environment setup script.
+#
+
+export HOME=/boot/home
+export SHELL=/bin/sh
+export USER=baron
+export GROUP=users
+
+BUILDHOME=/boot/develop
+
+case `uname -m` in
+*86*)
+	BB_HOST_CPU=x86
+	BETOOLS="$BUILDHOME/tools/gnupro/bin"
+	;;
+ppc*)
+	BB_HOST_CPU=ppc
+	BETOOLS="$BUILDHOME/bin"
+	;;
+*)
+	BB_HOST_CPU=unknown
+	BETOOLS="$BUILDHOME/bin"
+esac
+
+BELIBRARIES="$BUILDHOME/lib/$BB_HOST_CPU"
+BH=$BUILDHOME/headers
+BEINCLUDES="$BH;$BH/os;$BH/os/precompiled;$BH/posix;$BH/cpp;$BH/os/app;$BH/os/device;$BH/os/interface;$BH/os/media;$BH/os/midi;$BH/os/midi2;$BH/os/net;$BH/os/kernel;$BH/os/storage;$BH/os/support;$BH/os/game;$BH/os/opengl;$BH/os/drivers;$BH/gnu;$BH/os/mail;$BH/os/translation;$BH/os/devel;$BH/os/add-ons/graphics;$BH/os/os_apps/Deskbar;$BH/os/os_apps/NetPositive;$BH/os/os_apps/Tracker"
+
+export BUILDHOME
+export BETOOLS
+export BELIBRARIES
+export BEINCLUDES
+export BB_HOST_CPU
+
+# for the "cc" and "ld" shell scripts
+export BB_C_COMPILER=gcc
+export BB_CPLUS_COMPILER="g++"
+export BB_LINKER=ld
+export BB_DEFAULT_C_FLAGS=""
+export BB_DEFAULT_CPLUS_FLAGS=""
+
+if [ "$SAFEMODE" != "yes" ]
+then
+	export PATH=.:$HOME/config/bin:/bin:/boot/apps:/boot/preferences:/boot/beos/apps:/boot/beos/preferences:$BETOOLS
+	export LIBRARY_PATH="%A/lib:$HOME/config/lib:/boot/beos/system/lib"
+	export ADDON_PATH="%A/add-ons:$HOME/config/add-ons:/boot/beos/system/add-ons"
+else
+	export PATH=.:/bin:/boot/apps:/boot/preferences:/boot/beos/apps:/boot/beos/preferences:$BETOOLS
+	export LIBRARY_PATH="%A/lib:/boot/beos/system/lib"
+	export ADDON_PATH="%A/add-ons:/boot/beos/system/add-ons"
+fi
+
+# media kit
+if [ -f $HOME/config/settings/use_old_audio ]
+then
+	export USB_OLD_AUDIO=true
+fi
+
+# User setup environemnt
+if [ "$SAFEMODE" != "yes" ]
+then
+	if [ -f $HOME/config/boot/UserSetupEnvironment ]
+	then
+		. $HOME/config/boot/UserSetupEnvironment
+	fi
+fi
+

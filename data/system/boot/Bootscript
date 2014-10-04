@@ -1,0 +1,120 @@
+#
+# BeFree system's main boot script.
+#
+
+##
+## Some functions used by the main script
+##
+
+# launch <executable path> [thread to wait for]
+launch() {
+	if [ -f "/boot/$1" ]
+	then
+		"/boot/$1" &
+		[ "$2" != "" ] && waitfor "$2"
+		return 1
+	else
+		echo There is no "$1"
+	fi
+	return 0
+}
+
+# launchscript <script path>
+launchscript() {
+	if [ -f "/boot/$1" ]
+	then
+		. "/boot/$1"
+	fi
+}
+
+# runprog <executable path>
+runprog() {
+	if [ -f "/boot/$1" ]
+	then
+		"/boot/$1"
+		return 1
+	else
+		echo There is no "$1"
+	fi
+	return 0
+}
+
+##
+## Main script starts here
+##
+
+# Set up stdin/out/err to nirvana
+exec </dev/null
+exec >/dev/null 2>&1
+
+# Standard locations of boot files
+SCRIPTS=beos/system/boot
+SERVERS=beos/system/servers
+
+# Set up the environment
+export SAFEMODE=`/bin/safemode`
+launchscript $SCRIPTS/SetupEnvironment
+
+# Sets timezone etc.
+runprog beos/bin/clockconfig
+
+# Launch servers
+
+# We must wait for the app_server and registrar to be ready
+launch $SERVERS/registrar _roster_thread_               # launch registrar
+launch $SERVERS/debug_server                            # launch debug_server
+
+# Init Network
+if [ "$SAFEMODE" != "yes" ]
+then
+	launch $SERVERS/net_server                      # launch net_server
+fi
+
+# Launch Application Server
+if [ "$SAFEMODE" != "yes" ]
+then
+	launch $SERVERS/app_server picasso              # launch app_server
+else
+	launch $SERVERS/fake_app_server picasso
+fi
+
+# Launch syslog daemon
+if [ "$SAFEMODE" != "yes" ]
+then
+	launch $SERVERS/syslog_daemon
+	waitfor _input_server_event_loop_                # wait for input devices
+fi
+
+# Launch Terminal or consoled depending on $SAFEMODE
+if [ "$SAFEMODE" != "yes" ]
+then
+	launch beos/system/Tracker
+	launch beos/system/Deskbar
+	launch beos/apps/Terminal
+else
+	launch beos/bin/consoled
+fi
+
+# Launch MIDI and Media Servers
+if [ "$SAFEMODE" != "yes" ]
+then
+	launch $SERVERS/media_server
+	launch $SERVERS/midi_server
+fi
+
+# Launch Print Server 
+if [ "$SAFEMODE" != "yes" ]
+then
+	launch $SERVERS/print_server
+fi
+
+# Check for daily saving time
+launch beos/bin/dstcheck
+
+if [ "$SAFEMODE" != "yes" ]
+then
+	# Start user boot script
+	if [ -f $HOME/config/boot/UserBootscript ]; then
+		. $HOME/config/boot/UserBootscript
+	fi
+fi

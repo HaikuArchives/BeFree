@@ -1,0 +1,15 @@
+
+
+Input event handling
+---------------------
+
+                                   ProphecyCursor
+                                        |
+                                        |
+CoreInputDevice  )---  ProphecyPointer  )-')-.
+                                           |
+                                   ProphecyInputSwitch  -->  ProphecyInputChannel  )---  ProphecyWindow  -->  CoreWindow
+                                           |
+CoreInputDevice  )-.-  ProphecyKeyboard  )---'
+                   |
+CoreInputDevice  )-'
